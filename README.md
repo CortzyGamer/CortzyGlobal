@@ -1,8 +1,58 @@
-# CortzyGlobal — Documentação completa do sistema
+<div align="center">
 
-**Produto:** CortzyGlobal · **Criador:** CortzyGamer · **Plataforma:** Windows · **Documento:** visão funcional, manual de operação e referência técnica da versão inspecionada em 18/09/2026.
+![CortzyGlobal — documentação técnica e funcional](docs_banner.svg)
 
-> Esta documentação descreve os arquivos atuais do projeto. Funcionalidades previstas em pesquisas de mercado não são consideradas implementadas. O programa processa conteúdo localmente, mas pode acessar a internet para baixar modelos Whisper na primeira utilização.
+# CORTZYGLOBAL
+### Documentação oficial · Manual do usuário · Referência de engenharia
+
+**DESENVOLVEDOR:** Cortzygamer &nbsp; | &nbsp; **PLATAFORMA:** Windows &nbsp; | &nbsp; **EDIÇÃO:** 18/09/2026
+
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white) ![Interface](https://img.shields.io/badge/Interface-PyQt5-7446C8?style=for-the-badge) ![Processamento](https://img.shields.io/badge/Processamento-LOCAL-168C96?style=for-the-badge) ![Vídeo](https://img.shields.io/badge/Renderiza%C3%A7%C3%A3o-FFmpeg-6441C8?style=for-the-badge)
+
+**Criatividade com controle editorial. Da transcrição ao corte pronto.**
+
+</div>
+
+> [!IMPORTANT]
+> **Escopo da edição:** documentação da implementação inspecionada, não promessa de funcionalidades futuras. A seleção por IA usa texto transcrito, não interpretação visual dos quadros. Modelos Whisper podem precisar de download inicial. Avalie os cortes antes de publicá-los.
+
+---
+
+## ✦ Identidade e créditos
+
+| Identidade | Informação |
+|:--|:--|
+| **Produto** | **CortzyGlobal** |
+| **Desenvolvimento e autoria** | **Cortzygamer** |
+| **Canal do YouTube** | **Cortzygamer** — nome informado pelo desenvolvedor; endereço do canal não verificado. |
+| **Instagram** | **Cortzygamer** — nome informado pelo desenvolvedor; endereço do perfil não verificado. |
+| **Ambiente-alvo** | Aplicação desktop para Windows. |
+| **Propósito** | Seleção, revisão e exportação de cortes de vídeos longos com fala. |
+
+## ✦ Guia de navegação
+
+| Comece aqui | Aprofunde-se | Operação e suporte |
+|:--|:--|:--|
+| [01 · Visão geral](#1-visão-geral) | [05 · IA e transcrição](#5-como-funcionam-a-transcrição-e-a-escolha-dos-cortes) | [09 · Configurações](#9-configurações-iniciais-e-persistência) |
+| [02 · Instalação](#2-requisitos-e-dependências) | [06 · Renderização](#6-renderização-legendas-integridade-e-cancelamento) | [10 · Testes](#10-testes-e-evidências-disponíveis) |
+| [03 · Manual de uso](#3-manual-de-uso-do-vídeo-ao-resultado) | [07 · Arquitetura](#7-estrutura-do-projeto-e-responsabilidades-técnicas) | [11 · Problemas](#11-solução-de-problemas) |
+| [04 · Modelos visuais](#4-modelos-formato-e-opções-visuais) | [08 · Dados e arquivos](#8-arquivos-de-projeto-histórico-e-exemplos-de-dados) | [12 · Limitações](#12-limites-conhecidos-e-escopo-real) |
+
+**Manutenção e fontes:** [13 · Referências internas](#13-referências-internas-e-manutenção) · [14 · Fluxo de arquitetura](#14-diagrama-do-fluxo-e-contratos-entre-módulos) · [15 · Checklist de entrega](#15-checklist-profissional-de-operação-e-entrega).
+
+---
+
+## ✦ Painel executivo
+
+| Entrada | Inteligência | Controle humano | Entrega |
+|:--|:--|:--|:--|
+| Vídeo local e metadados | Whisper + Ollama ou regras | Cortes, texto, horários, legenda e enquadramento | MP4, SRT, ASS, JSON e relatório |
+
+**Fluxo do produto:** `Vídeo → ffprobe → Whisper/SRT → seleção de candidatos → validação → revisão → FFmpeg → verificação → arquivos finais`.
+
+**Três garantias distintas:** o código verifica propriedades técnicas de saída; a integridade da fala requer revisão; qualidade editorial e desempenho em redes sociais não são garantidos por pontuação numérica.
+
+---
 
 ## 1. Visão geral
 
@@ -202,6 +252,66 @@ A pasta `.verification` contém scripts e artefatos existentes para testes de tr
 
 Consulte `README.md` para a operação de interface e atalhos; `PESQUISA_E_RECURSOS.md` para metodologia e evidências históricas; `requirements.txt` para dependências exatas; arquivos `test_*.py` e `.verification/` para critérios de teste. Para mudanças de comportamento, altere as regras em `cortes_core.py`, orquestração em `cortes_worker.py`, geração de mídia em `cortes_media.py` e interface em `app_cortes.py`, rodando os testes após a alteração. Evite editar `.venv`, caches, exportações ou registros de verificação como se fossem código-fonte. Guarde backup do vídeo original, projetos JSON e resultados finais antes de limpar pastas geradas.
 
+
+## 14. Diagrama do fluxo e contratos entre módulos
+
+```mermaid
+flowchart TD
+  A[Usuário e vídeo original] --> B[Interface PyQt5: app_cortes.py]
+  B --> C[Worker QThread: cortes_worker.py]
+  C --> D[ffprobe: metadados da mídia]
+  D --> E{Transcrição disponível?}
+  E -->|Importada ou editada| F[Normalizar e validar segmentos]
+  E -->|Cache válido| F
+  E -->|Não| G[FFmpeg WAV + faster-whisper]
+  G --> F
+  F --> H{Modo de seleção}
+  H -->|IA disponível| I[Ollama local: IDs e scores]
+  H -->|Regras ou fallback| J[Heurísticas de fala]
+  I --> K[Validar IDs, limites e sobreposição]
+  J --> K
+  K --> L[Revisão na interface]
+  L --> M[FFmpeg: vídeo, áudio e legendas]
+  M --> N[ffprobe: validar resultado]
+  N --> O[MP4 + SRT + ASS + relatório JSON]
+  C --> P[projeto.json e progresso]
+  P --> B
+```
+
+**Fronteiras de responsabilidade.** A interface coordena a experiência; o núcleo valida valores e persiste dados; o worker gerencia etapas e cancelamento; o módulo de mídia renderiza e inspeciona a saída. O Ollama funciona em `localhost:11434`, e modelos Whisper são executados localmente após disponibilizados.
+
+### Contratos de dados
+
+| Contrato | Campos centrais | Responsável |
+|:--|:--|:--|
+| Entrada de vídeo | Caminho, duração, dimensões, FPS e áudio | `probe_media` |
+| Segmento da fala | `id`, `start`, `end`, `text`, `words` | `normalize_segments` |
+| Sugestão de corte | `titulo`, `inicio`, `fim`, `score`, `selected`, `origem` | `clip_from_ids` / `heuristic_candidates` |
+| Projeto reabrível | `version`, `source`, `settings`, `segments`, `clips`, `exports` | `save_project` / `load_project` |
+| Exportação verificada | Caminhos MP4/SRT/ASS, dimensões e duração medidas | `render_clip` |
+
+> [!NOTE]
+> Os diagramas Mermaid dependem do visualizador Markdown. Em editores sem suporte, a descrição textual deste capítulo continua sendo a referência. A capa SVG usa um arquivo local do projeto; mantenha `docs_banner.svg` ao lado deste documento para preservar as cores.
+
+## 15. Checklist profissional de operação e entrega
+
+- [ ] **Ambiente:** Python, FFmpeg/ffprobe e bibliotecas disponíveis; Ollama instalado e modelo baixado apenas quando desejado.
+- [ ] **Fonte:** vídeo original íntegro, acessível e com áudio; caso contrário, usar SRT ou edição manual.
+- [ ] **Seleção:** conferir se cada título, início, fim e quantidade corresponde aos limites definidos.
+- [ ] **Conteúdo:** revisar começo da fala, contexto, conclusão, nomes e texto das legendas.
+- [ ] **Visual:** renderizar prévia com modelo, verificar enquadramento, cortes laterais, marca e legibilidade.
+- [ ] **Exportação:** conferir MP4, SRT, ASS, duração, resolução, áudio, `relatorio.json` e aba Atividade.
+- [ ] **Retomada:** conservar `projeto.json` e original; fazer backup dos resultados e não confundir cache com backup.
+- [ ] **Evolução:** rodar `& '.venv/Scripts/python.exe' -m unittest discover -v` depois de alterar código; documentar qualquer falha.
+
 ---
 
-**Resumo:** CortzyGlobal é uma solução local de transcrição, sugestão textual, revisão e exportação de cortes. Seu diferencial funcional nesta versão é combinar controle editorial humano, limites ancorados na fala, diferentes estilos de composição e validação técnica do resultado. A documentação distingue claramente recursos implementados, opções condicionais e capacidades ainda não existentes.
+<div align="center">
+
+**CORTZYGLOBAL** · Documentação técnica e funcional
+
+**Desenvolvido por Cortzygamer** · **YouTube: Cortzygamer** · **Instagram: Cortzygamer**
+
+*Seu conteúdo. Novos formatos. Controle em cada corte.*
+
+</div>
